@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Imposter Spiel</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    input, button {
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    input {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    input:focus {
+      outline: none;
+      border: 1px solid #00c6ff;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    input {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+    button {
+      background: #00c6ff;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #007acc;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+    li {
+      background: rgba(255,255,255,0.1);
+      margin: 0.3rem 0;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+    }
+    #wordDisplay {
+      margin-top: 2rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #ffeb3b;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxwXngOsI-j1lDY4Kdj9zEVI5PVBjcphM",
+      authDomain: "imposter-theo.firebaseapp.com",
+      projectId: "imposter-theo",
+      storageBucket: "imposter-theo.appspot.com",
+      messagingSenderId: "562064712550",
+      appId: "1:562064712550:web:0986447108a999928dea7",
+      measurementId: "G-M4MJZDQGN",
+      databaseURL: "https://imposter-theo-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+
+    const wordList = ["Tisch", "Stuhl", "Lampe", "Fernseher", "Bleistift", "Kugelschreiber", "Radiergummi", "Tasche", "Rucksack", "Spiegel", "Teller", "Gabel", "Löffel", "Messer", "Topf", "Pfanne", "Becher", "Glas", "Handy", "Laptop", "Uhr", "Bett", "Schrank", "Kissen", "Decke", "Vorhang", "Kerze", "Buch", "Fernbedienung", "Tastatur", "Maus", "Monitor", "Ladegerät", "USB-Stick", "Steckdose", "Kamera", "Waschmaschine", "Backofen", "Toaster", "Mixer", "Wasserkocher", "Kühlschrank", "Seife", "Zahnbürste", "Kamm", "Föhn", "Schere", "Lineal", "Ordner", "Heft", "Schlüssel", "Schraubenzieher", "Hammer", "Bohrer", "Säge", "Nagel", "Zange", "Klebeband", "Klammer", "Notizzettel", "Kleber", "Papier", "Mülleimer", "Koffer", "Fahrrad", "Roller", "Auto", "Helm", "Regenschirm", "Schwamm", "Waschlappen", "Lappen", "Tafel", "Whiteboard", "Stempel", "Thermoskanne", "Schüssel", "Serviette", "Mikrowelle", "Hund", "Katze", "Pferd", "Kuh", "Schwein", "Schaf", "Huhn", "Hahn", "Ente", "Gans", "Eule", "Fuchs", "Wolf", "Löwe", "Tiger", "Elefant", "Giraffe", "Affe", "Krokodil", "Nilpferd", "Zebra", "Bär", "Pinguin", "Delfin", "Wal", "Hai", "Fisch", "Krabbe", "Tintenfisch", "Seestern", "Pizza", "Spaghetti", "Burger", "Pommes", "Hotdog", "Suppe", "Steak", "Wurst", "Käse", "Brot", "Brötchen", "Croissant", "Müsli", "Reis", "Curry", "Salat", "Tomate", "Gurke", "Karotte", "Paprika", "Apfel", "Banane", "Orange", "Melone", "Traube", "Zitrone", "Erdbeere", "Himbeere", "Kirsche", "Ananas", "Kuchen", "Torte", "Keks", "Schokolade", "Bonbon", "Lolli", "Eis", "Joghurt", "Milch", "Wasser", "Baum", "Blume", "Wald", "Wiese", "Fluss", "See", "Meer", "Berg", "Hügel", "Tal", "Wolke", "Sonne", "Mond", "Stern", "Regen", "Schnee", "Sturm", "Wind", "Nebel", "Vulkan", "Lavasee", "Gletscher", "Eisberg", "Sand", "Stein", "Felsen", "Moos", "Ast", "Blatt", "Pilz", "Arzt", "Lehrer", "Polizist", "Feuerwehrmann", "Bäcker", "Metzger", "Koch", "Kellner", "Friseur", "Mechaniker", "Elektriker", "Schreiner", "Maler", "Bauarbeiter", "Gärtner", "Tierarzt", "Zahnarzt", "Pilot", "Ingenieur", "Programmierer", "Designer", "Journalist", "Schauspieler", "Musiker", "Sänger", "Autor", "Anwalt", "Richter", "Wissenschaftler", "Astronaut", "Albert Einstein", "Angela Merkel", "Donald Trump", "Barack Obama", "Elon Musk", "Taylor Swift", "Cristiano Ronaldo", "Lionel Messi", "Leonardo DiCaprio", "Emma Watson", "Michael Jackson", "Ariana Grande", "Justin Bieber", "Bill Gates", "Steve Jobs", "Oprah Winfrey", "Drake", "Ed Sheeran", "Shakira", "The Rock", "Minecraft", "Fortnite", "FIFA", "Call of Duty", "Among Us", "Zelda", "Super Mario", "Roblox", "GTA", "Rocket League", "League of Legends", "Valorant", "Overwatch", "The Sims", "Clash Royale", "Harry Potter", "Star Wars", "Avengers", "Shrek", "The Simpsons", "Stranger Things", "Breaking Bad", "SpongeBob", "Batman", "Frozen", "Spiderman", "Iron Man", "Captain America", "The Mandalorian", "The Witcher", "Rot", "Blau", "Grün", "Gelb", "Lila", "Schwarz", "Weiß", "Grau", "Rosa", "Türkis", "Beige", "Braun", "Gold", "Silber", "Deutschland", "Frankreich", "Italien", "Spanien", "Portugal", "Polen", "Österreich", "Schweiz", "Niederlande", "Belgien", "Berlin", "Paris", "Rom", "Madrid", "Wien", "Basketball", "Tennis", "Volleyball", "Schwimmen", "Boxen", "Turnen", "Skifahren", "Eishockey", "Rugby", "Badminton", "Tischtennis", "Leichtathletik", "Ringen", "Fechten", "Klettern", "Mathe", "Deutsch", "Englisch", "Biologie", "Physik", "Chemie", "Geschichte", "Erdkunde", "Kunst", "Sport", "Informatik", "Nike", "Adidas", "Apple", "Samsung", "Coca-Cola", "Pepsi", "Lego", "Sony", "IKEA", "Google", "Microsoft", "Amazon", "McDonald's", "YouTube", "Netflix"];
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let gameId = "";
+    let playerName = "";
+    let isHost = false;
+
+    const joinScreen = document.getElementById("joinScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const wordDisplay = document.getElementById("wordDisplay");
+    const playerList = document.getElementById("playerList");
+
+    document.getElementById("createGame").onclick = () => {
+      playerName = document.getElementById("playerName").value.trim();
+      if (!playerName) {
+        alert("Bitte gib einen Namen ein!");
+        return;
+      }
+      isHost = true;
+      gameId = Math.random().toString(36).substring(2, 7);
+      set(ref(db, `games/${gameId}/players/${playerName}`), "waiting");
+      listenForPlayers();
+      listenForWord();
+      showGameScreen();
+    };
+
+    document.getElementById("joinGame").onclick = () => {
+      gameId = document.getElementById("gameCode").value.trim();
+      playerName = document.getElementById("playerName").value.trim();
+      if (!playerName || !gameId) {
+        alert("Bitte gib sowohl Name als auch Spielcode ein!");
+        return;
+      }
+      set(ref(db, `games/${gameId}/players/${playerName}`), "waiting");
+      listenForWord();
+      showGameScreen(false);
+    };
+
+    document.getElementById("startGame").onclick = async () => {
+      const snapshot = await fetch(`https://imposter-theo-default-rtdb.europe-west1.firebasedatabase.app/games/${gameId}/players.json`)
+        .then(res => res.json());
+      const names = Object.keys(snapshot).filter(name => name);
+      const imposterIndex = Math.floor(Math.random() * names.length);
+      const sharedWord = wordList[Math.floor(Math.random() * wordList.length)];
+
+      names.forEach((name, index) => {
+        const word = index === imposterIndex ? "Imposter" : sharedWord;
+        set(ref(db, `games/${gameId}/players/${name}`), word);
+      });
+    };
+
+    function listenForPlayers() {
+      const playersRef = ref(db, `games/${gameId}/players`);
+      onValue(playersRef, (snapshot) => {
+        const data = snapshot.val();
+        playerList.innerHTML = "";
+        for (const name in data) {
+          if (name) {
+            const li = document.createElement("li");
+            li.textContent = name;
+            playerList.appendChild(li);
+          }
+        }
+      });
+    }
+
+    function listenForWord() {
+      const myRef = ref(db, `games/${gameId}/players/${playerName}`);
+      onValue(myRef, (snapshot) => {
+        const word = snapshot.val();
+        if (word !== "waiting") {
+          if (word === "Imposter") {
+          wordDisplay.innerHTML = '<span style="color:red; font-size:2rem;">IMPOSTER</span>';
+        } else {
+          wordDisplay.innerText = `Dein Wort: ${word}`;
+        }
+        }
+      });
+    }
+
+    function showGameScreen(showStart = true) {
+      joinScreen.style.display = "none";
+      gameScreen.style.display = "block";
+      document.getElementById("gameCodeDisplay").innerText = gameId;
+      if (!isHost) document.getElementById("startGame").style.display = "none";
+    }
+  </script>
+</head>
+<body>
+  <div class="container" id="joinScreen">
+    <h1>🎮 Imposter Spiel</h1>
+    <input id="playerName" placeholder="Dein Name"><br>
+    <button id="createGame">🆕 Neues Spiel erstellen</button>
+    <input id="gameCode" placeholder="Spielcode eingeben">
+    <button id="joinGame">📲 Beitreten</button>
+  </div>
+
+  <div class="container" id="gameScreen" style="display:none">
+    <h2>Spielcode: <span id="gameCodeDisplay"></span></h2>
+    <ul id="playerList"></ul>
+    <button id="startGame">▶ Spiel starten</button>
+    <div id="wordDisplay"></div>
+  </div>
+</body>
+</html>
